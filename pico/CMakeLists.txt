@@ -6,7 +6,7 @@ include(pico_sdk_import.cmake)
 
 project(my_project)
 
-set(PICO_BOARD pico_w)
+set(PICO_BOARD pico)
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
@@ -17,7 +17,6 @@ add_executable(main
 
 target_link_libraries(main
     pico_stdlib
-    pico_cyw43_arch_none
     pico_multicore
 )
 

@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include "tusb.h"
 #include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
 #include "pico/multicore.h"
 #include "ws2812.hpp"
 
@@ -27,15 +25,9 @@ void core1_main();
 
 int main() {
     stdio_init_all();
-    while (!tud_cdc_connected()) {
-        tight_loop_contents();
-    }
     printf("init\n");
-    if (cyw43_arch_init()) {
-        printf("Wi-Fi init failed");
-        return -1;
-    }
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     // initialize buffers
     for (int i = 0; i < NUM_LEDS; i++) {
         led_buffer_1[i] = {0, 0, 0};
@@ -43,20 +35,19 @@ int main() {
     }
     // start core 1
     multicore_launch_core1(core1_main);
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, false); 
 
     while (true) {
-        printf("led finished\n");
         LED *led_buffer = usb_buffer ? led_buffer_2 : led_buffer_1;
         for (int i = 0; i < NUM_LEDS; i++) {
-//            led_buffer[i] = {(uint8_t)getchar(), (uint8_t)getchar(), (uint8_t)getchar()};
+            led_buffer[i] = {(uint8_t)getchar(), (uint8_t)getchar(), (uint8_t)getchar()};
         }
         usb_buffer = !usb_buffer;
         usb_transfer_finished = true;
         while (!dma_transfer_finished) {
             tight_loop_contents();
         }
-        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, usb_buffer);
+        printf("request");
+        gpio_put(PICO_DEFAULT_LED_PIN, usb_buffer);        
         dma_transfer_finished = false;
         dma_buffer = !dma_buffer;
     }
