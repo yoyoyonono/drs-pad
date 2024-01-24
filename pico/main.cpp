@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
-#include "ws2812.hpp"
+#include "led.hpp"
 
 #define LED_STRIP_LENGTH 49
 #define LED_NUM_STRIPS 38
@@ -46,7 +46,7 @@ int main() {
         while (!dma_transfer_finished) {
             tight_loop_contents();
         }
-        printf("request");
+        printf("a");
         gpio_put(PICO_DEFAULT_LED_PIN, usb_buffer);        
         dma_transfer_finished = false;
         dma_buffer = !dma_buffer;
@@ -55,7 +55,7 @@ int main() {
 
 void core1_main() {
     while (true) {
-        sleep_ms(100);
+        LED *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
         dma_transfer_finished = true;
     }
 }
