@@ -24,6 +24,11 @@ volatile bool dma_buffer = true; // false = buffer 1, true = buffer 2
 void core1_main();
 
 int main() {
+    // set frequency to 270 MHz
+    set_sys_clock_khz(270000, true);
+
+    sleep_ms(1000);
+
     stdio_init_all();
     printf("init\n");
     gpio_init(PICO_DEFAULT_LED_PIN);
@@ -56,6 +61,10 @@ int main() {
 void core1_main() {
     while (true) {
         LED *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
+        sleep_us(NUM_LEDS * 30 + 50);
         dma_transfer_finished = true;
+        while (!usb_transfer_finished) {
+            tight_loop_contents();
+        }
     }
 }
