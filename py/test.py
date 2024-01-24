@@ -8,4 +8,4 @@ with serial.Serial("COM5", 921600) as ser:
         if ser.read(1) != b'a':
             break
         t1_stop = perf_counter()
-        print(f'Elapsed time: {t1_stop - t1_start:.3f} s Framerate {1 / (t1_stop - t1_start):.3f}')
+        print(f'{t1_stop - t1_start:.3f}s {1 / (t1_stop - t1_start):.3f}FPS')
