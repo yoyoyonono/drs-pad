@@ -10,6 +10,15 @@
 LED led_buffer_1[NUM_LEDS];
 LED led_buffer_2[NUM_LEDS];
 
+LED strip_1[LED_STRIP_LENGTH * 5];
+LED strip_2[LED_STRIP_LENGTH * 5];
+LED strip_3[LED_STRIP_LENGTH * 5];
+LED strip_4[LED_STRIP_LENGTH * 5];
+LED strip_5[LED_STRIP_LENGTH * 5];
+LED strip_6[LED_STRIP_LENGTH * 5];
+LED strip_7[LED_STRIP_LENGTH * 4];
+LED strip_8[LED_STRIP_LENGTH * 4];
+
 volatile bool usb_transfer_finished = false;
 volatile bool dma_transfer_finished = false;
 
@@ -61,7 +70,61 @@ int main() {
 void core1_main() {
     while (true) {
         LED *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
-        sleep_us(NUM_LEDS * 30 + 50);
+        // add leds from buffer to strip buffers in zig-zag pattern
+        // if even strip, add normally else add in reverse order
+        for (int i = 0; i < NUM_LEDS; i++) {
+            bool is_even_strip = (i / LED_STRIP_LENGTH) % 2;
+            if (i < LED_STRIP_LENGTH * 5) {
+                if (is_even_strip) {
+                    strip_1[i] = led_buffer[i];
+                } else {
+                    strip_1[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH)] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 10) {
+                if (is_even_strip) {
+                    strip_2[i - LED_STRIP_LENGTH * 5] = led_buffer[i];
+                } else {
+                    strip_2[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 5] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 15) {
+                if (is_even_strip) {
+                    strip_3[i - LED_STRIP_LENGTH * 10] = led_buffer[i];
+                } else {
+                    strip_3[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 10] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 20) {
+                if (is_even_strip) {
+                    strip_4[i - LED_STRIP_LENGTH * 15] = led_buffer[i];
+                } else {
+                    strip_4[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 15] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 25) {
+                if (is_even_strip) {
+                    strip_5[i - LED_STRIP_LENGTH * 20] = led_buffer[i];
+                } else {
+                    strip_5[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 20] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 30) {
+                if (is_even_strip) {
+                    strip_6[i - LED_STRIP_LENGTH * 25] = led_buffer[i];
+                } else {
+                    strip_6[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 25] = led_buffer[i];
+                }
+            } else if (i < LED_STRIP_LENGTH * 34) {
+                if (is_even_strip) {
+                    strip_7[i - LED_STRIP_LENGTH * 30] = led_buffer[i];
+                } else {
+                    strip_7[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 30] = led_buffer[i];
+                }
+            } else {
+                if (is_even_strip) {
+                    strip_8[i - LED_STRIP_LENGTH * 34] = led_buffer[i];
+                } else {
+                    strip_8[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 34] = led_buffer[i];
+                }
+            }
+        }
+        sleep_us(NUM_LEDS / 8 * 30 + 50);
         dma_transfer_finished = true;
         while (!usb_transfer_finished) {
             tight_loop_contents();
