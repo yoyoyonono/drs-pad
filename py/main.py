@@ -4,6 +4,7 @@ import json
 import numpy as np
 import pygame
 import websockets
+import serial
 
 @dataclasses.dataclass
 class LED:
@@ -14,6 +15,7 @@ class LED:
 async def main():
     pygame.init()
     display = pygame.display.set_mode((38*10, 49*10))
+    ser = serial.Serial("COM5", 921600)
     async with websockets.connect("ws://localhost:9002") as socket:
         print("connected")
         while True:
@@ -23,10 +25,9 @@ async def main():
             values = np.array(rgb_values, dtype=np.uint8).reshape(49, 38, 3)
             image = values.transpose(1, 0, 2)
             leds = np.array([LED(*x) for x in values.reshape(49*38, 3)]).reshape(49, 38)
-            for y in range(49):
-                for x in range(38):
-                    # TODO: write the thing to dump the thing
-                    pass
+            for x in range(38):
+                for y in range(49):
+                    ser.write(bytes([leds[y, x].r, leds[y, x].g, leds[y, x].b]))                    
             surface = pygame.surfarray.make_surface(image)
             display.blit(pygame.transform.scale(surface, (38*10, 49*10)), (0, 0))
             pygame.display.update()
