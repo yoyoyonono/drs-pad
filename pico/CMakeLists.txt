@@ -15,9 +15,12 @@ add_executable(main
     main.cpp
 )
 
+add_subdirectory(pico_neopixels)
+
 target_link_libraries(main
     pico_stdlib
     pico_multicore
+    pico_neopixel
 )
 
 pico_enable_stdio_usb(main 1)
