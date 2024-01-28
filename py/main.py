@@ -20,8 +20,12 @@ async def main():
     socket = await websockets.connect("ws://localhost:9002")
     print("connected")
     while True:
-        await socket.send(b'{"id":0,"module":"drs","function":"tapeled_get","params":[]}')
-        message = await socket.recv()
+        try:
+            await socket.send(b'{"id":0,"module":"drs","function":"tapeled_get","params":[]}')
+            message = await socket.recv()
+        except:
+            socket = await websockets.connect("ws://localhost:9002")
+            continue
         rgb_values = [x & 0xFE for x in json.loads(message[:-1])["data"][0]]
         values = np.array(rgb_values, dtype=np.uint8).reshape(49, 38, 3)
         image = values.transpose(1, 0, 2)
