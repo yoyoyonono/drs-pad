@@ -1,23 +1,33 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
+#include "Adafruit_NeoPixel.hpp"
 #include "led.hpp"
 
 #define LED_STRIP_LENGTH 49
 #define LED_NUM_STRIPS 38
 #define NUM_LEDS LED_STRIP_LENGTH * LED_NUM_STRIPS
 
+#define LED_STRIP_1_PIN 2
+#define LED_STRIP_2_PIN 3
+#define LED_STRIP_3_PIN 4
+#define LED_STRIP_4_PIN 5
+#define LED_STRIP_5_PIN 6
+#define LED_STRIP_6_PIN 7
+#define LED_STRIP_7_PIN 8
+#define LED_STRIP_8_PIN 9
+
 LED led_buffer_1[NUM_LEDS];
 LED led_buffer_2[NUM_LEDS];
 
-LED strip_1[LED_STRIP_LENGTH * 5];
-LED strip_2[LED_STRIP_LENGTH * 5];
-LED strip_3[LED_STRIP_LENGTH * 5];
-LED strip_4[LED_STRIP_LENGTH * 5];
-LED strip_5[LED_STRIP_LENGTH * 5];
-LED strip_6[LED_STRIP_LENGTH * 5];
-LED strip_7[LED_STRIP_LENGTH * 4];
-LED strip_8[LED_STRIP_LENGTH * 4];
+Adafruit_NeoPixel strip_1 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_1_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_2 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_2_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_3 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_3_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_4 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_4_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_5 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_5_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_6 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_6_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_7 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 4, LED_STRIP_7_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_8 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 4, LED_STRIP_8_PIN, NEO_GRB + NEO_KHZ800);
 
 volatile bool usb_transfer_finished = false;
 volatile bool dma_transfer_finished = false;
@@ -72,59 +82,38 @@ void core1_main() {
         LED *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
         // add leds from buffer to strip buffers in zig-zag pattern
         // if even strip, add normally else add in reverse order
-        for (int i = 0; i < NUM_LEDS; i++) {
-            bool is_even_strip = (i / LED_STRIP_LENGTH) % 2;
-            if (i < LED_STRIP_LENGTH * 5) {
-                if (is_even_strip) {
-                    strip_1[i] = led_buffer[i];
-                } else {
-                    strip_1[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH)] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 10) {
-                if (is_even_strip) {
-                    strip_2[i - LED_STRIP_LENGTH * 5] = led_buffer[i];
-                } else {
-                    strip_2[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 5] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 15) {
-                if (is_even_strip) {
-                    strip_3[i - LED_STRIP_LENGTH * 10] = led_buffer[i];
-                } else {
-                    strip_3[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 10] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 20) {
-                if (is_even_strip) {
-                    strip_4[i - LED_STRIP_LENGTH * 15] = led_buffer[i];
-                } else {
-                    strip_4[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 15] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 25) {
-                if (is_even_strip) {
-                    strip_5[i - LED_STRIP_LENGTH * 20] = led_buffer[i];
-                } else {
-                    strip_5[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 20] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 30) {
-                if (is_even_strip) {
-                    strip_6[i - LED_STRIP_LENGTH * 25] = led_buffer[i];
-                } else {
-                    strip_6[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 25] = led_buffer[i];
-                }
-            } else if (i < LED_STRIP_LENGTH * 34) {
-                if (is_even_strip) {
-                    strip_7[i - LED_STRIP_LENGTH * 30] = led_buffer[i];
-                } else {
-                    strip_7[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 30] = led_buffer[i];
-                }
-            } else {
-                if (is_even_strip) {
-                    strip_8[i - LED_STRIP_LENGTH * 34] = led_buffer[i];
-                } else {
-                    strip_8[LED_STRIP_LENGTH - 1 - (i % LED_STRIP_LENGTH) + LED_STRIP_LENGTH * 34] = led_buffer[i];
-                }
-            }
+        for (int i = 0; i < LED_STRIP_LENGTH * 5; i++) {
+            strip_1.setPixelColor(i, strip_1.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
         }
-        sleep_us(NUM_LEDS / 8 * 30 + 50);
+        for (int i = LED_STRIP_LENGTH * 5; i < LED_STRIP_LENGTH * 10; i++) {
+            strip_2.setPixelColor(i, strip_2.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 10; i < LED_STRIP_LENGTH * 15; i++) {
+            strip_3.setPixelColor(i, strip_3.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 15; i < LED_STRIP_LENGTH * 20; i++) {
+            strip_4.setPixelColor(i, strip_4.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 20; i < LED_STRIP_LENGTH * 25; i++) {
+            strip_5.setPixelColor(i, strip_5.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 25; i < LED_STRIP_LENGTH * 30; i++) {
+            strip_6.setPixelColor(i, strip_6.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 30; i < LED_STRIP_LENGTH * 34; i++) {
+            strip_7.setPixelColor(i, strip_7.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        for (int i = LED_STRIP_LENGTH * 34; i < LED_STRIP_LENGTH * 38; i++) {
+            strip_8.setPixelColor(i, strip_8.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
+        }
+        strip_1.show();
+        strip_2.show();
+        strip_3.show();
+        strip_4.show();
+        strip_5.show();
+        strip_6.show();
+        strip_7.show();
+        strip_8.show();
         dma_transfer_finished = true;
         while (!usb_transfer_finished) {
             tight_loop_contents();
