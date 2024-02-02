@@ -10,6 +10,8 @@ set(PICO_BOARD pico)
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+include(brotli/interfaceLibForPicoSDK.cmake)
+
 # rest of your project
 add_executable(main
     main.cpp
@@ -21,6 +23,7 @@ target_link_libraries(main
     pico_stdlib
     pico_multicore
     pico_neopixel
+    brotli
 )
 
 pico_enable_stdio_usb(main 1)
