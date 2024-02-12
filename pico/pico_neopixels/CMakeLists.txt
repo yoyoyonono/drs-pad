@@ -6,8 +6,8 @@ target_sources(pico_neopixel INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/Adafruit_NeoPixel.cpp
 )
 
-pico_enable_stdio_usb(pico_neopixel 1)
-pico_enable_stdio_uart(pico_neopixel 0)
+pico_enable_stdio_usb(pico_neopixel 0)
+pico_enable_stdio_uart(pico_neopixel 1)
 
 target_include_directories(pico_neopixel INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 

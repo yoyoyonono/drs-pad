@@ -2,23 +2,20 @@
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "Adafruit_NeoPixel.hpp"
+#include "brotli/c/include/brotli/decode.h"
 #include "led.hpp"
 
 #define LED_STRIP_LENGTH 49
 #define LED_NUM_STRIPS 38
 #define NUM_LEDS LED_STRIP_LENGTH * LED_NUM_STRIPS
 
-#define LED_STRIP_1_PIN 2
-#define LED_STRIP_2_PIN 3
-#define LED_STRIP_3_PIN 4
-#define LED_STRIP_4_PIN 5
-#define LED_STRIP_5_PIN 6
-#define LED_STRIP_6_PIN 7
-#define LED_STRIP_7_PIN 8
-#define LED_STRIP_8_PIN 9
+#define LED_STRIP_1_PIN 27
 
-LED led_buffer_1[NUM_LEDS];
-LED led_buffer_2[NUM_LEDS];
+uint8_t usb_read_buffer[NUM_LEDS * 3 + 1000];
+uint8_t led_buffer_1[NUM_LEDS * 3];
+uint8_t led_buffer_2[NUM_LEDS * 3];
+
+size_t decompressed_size = sizeof(led_buffer_1);
 
 Adafruit_NeoPixel strip_1 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_1_PIN, NEO_GRB + NEO_KHZ800);
 //Adafruit_NeoPixel strip_2 = Adafruit_NeoPixel(LED_STRIP_LENGTH * 5, LED_STRIP_2_PIN, NEO_GRB + NEO_KHZ800);
@@ -46,77 +43,67 @@ int main() {
     // set frequency to 270 MHz
     set_sys_clock_khz(270000, true);
 
+
     sleep_ms(1000);
 
-    stdio_init_all();
-    printf("init\n");
+    stdio_uart_init_full(uart0, 460800, 0, 1);
+
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    // initialize strips
+    strip_1.begin();
+    strip_1.clear();
+
     // initialize buffers
-    for (int i = 0; i < NUM_LEDS; i++) {
-        led_buffer_1[i] = {0, 0, 0};
-        led_buffer_2[i] = {0, 0, 0};
+    for (int i = 0; i < NUM_LEDS * 3; i++) {
+        led_buffer_1[i] = 0;
+        led_buffer_2[i] = 0;
     }
     // start core 1
     multicore_launch_core1(core1_main);
 
     while (true) {
-        LED *led_buffer = usb_buffer ? led_buffer_2 : led_buffer_1;
-        for (int i = 0; i < NUM_LEDS; i++) {
-            led_buffer[i] = {(uint8_t)getchar(), (uint8_t)getchar(), (uint8_t)getchar()};
+        uint8_t *led_buffer = usb_buffer ? led_buffer_2 : led_buffer_1;
+        // first two bytes are length and then read that many bytes from usb
+        
+        printf("a");
+        uint16_t length = static_cast<uint8_t>(getchar()) << 8 | static_cast<uint8_t>(getchar());
+        // read data from usb
+        for (uint16_t i = 0; i < length; i++) {
+            usb_read_buffer[i] = getchar();
         }
-        usb_buffer = !usb_buffer;
+
+        // decompress data into buffer
+
+        BrotliDecoderResult result = BrotliDecoderDecompress(length, usb_read_buffer, &decompressed_size, (uint8_t *)led_buffer);
+
+        if (result == BROTLI_DECODER_RESULT_ERROR || decompressed_size != NUM_LEDS * 3) {
+            printf("e");
+        }
+        
         usb_transfer_finished = true;
         while (!dma_transfer_finished) {
             tight_loop_contents();
         }
-        printf("a");
         gpio_put(PICO_DEFAULT_LED_PIN, usb_buffer);        
         dma_transfer_finished = false;
-        dma_buffer = !dma_buffer;
+        usb_buffer = !usb_buffer;
     }
 }
 
 void core1_main() {
     while (true) {
-        LED *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
-        // add leds from buffer to strip buffers in zig-zag pattern
-        // if even strip, add normally else add in reverse order
-        for (int i = 0; i < LED_STRIP_LENGTH * 5; i++) {
-            strip_1.setPixelColor(i, strip_1.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-        }
-//        for (int i = LED_STRIP_LENGTH * 5; i < LED_STRIP_LENGTH * 10; i++) {
-//            strip_2.setPixelColor(i, strip_2.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 10; i < LED_STRIP_LENGTH * 15; i++) {
-//            strip_3.setPixelColor(i, strip_3.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 15; i < LED_STRIP_LENGTH * 20; i++) {
-//            strip_4.setPixelColor(i, strip_4.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 20; i < LED_STRIP_LENGTH * 25; i++) {
-//            strip_5.setPixelColor(i, strip_5.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 25; i < LED_STRIP_LENGTH * 30; i++) {
-//            strip_6.setPixelColor(i, strip_6.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 30; i < LED_STRIP_LENGTH * 34; i++) {
-//            strip_7.setPixelColor(i, strip_7.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-//        for (int i = LED_STRIP_LENGTH * 34; i < LED_STRIP_LENGTH * 38; i++) {
-//            strip_8.setPixelColor(i, strip_8.Color(led_buffer[i].r, led_buffer[i].g, led_buffer[i].b));
-//        }
-        strip_1.show();
-//        strip_2.show();
-//        strip_3.show();
-//        strip_4.show();
-//        strip_5.show();
-//        strip_6.show();
-//        strip_7.show();
-//        strip_8.show();
+        uint8_t *led_buffer = dma_buffer ? led_buffer_2 : led_buffer_1; 
+        // add leds from buffer to strip buffers
+//        for (uint16_t i = 0; i < LED_STRIP_LENGTH * 5; i++) {
+//            strip_1.setPixelColor(i, strip_1.Color(led_buffer[i * 3], led_buffer[i * 3 + 1], led_buffer[i * 3 + 2]));
+//       }
+//        strip_1.show();
         dma_transfer_finished = true;
         while (!usb_transfer_finished) {
             tight_loop_contents();
         }
+        dma_buffer = !dma_buffer;
     }
 }
