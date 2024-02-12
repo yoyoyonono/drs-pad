@@ -21,10 +21,14 @@ async def main():
         except Exception:
             socket = await websockets.connect("ws://localhost:9002")
             continue
-        rgb_values = [x & 0xFE for x in json.loads(message[:-1])["data"][0]]
+        rgb_values = [x & 0xF0 for x in json.loads(message[:-1])["data"][0]]
         values = np.array(rgb_values, dtype=np.uint8).reshape(49, 38, 3)
         image = values.transpose(1, 0, 2)
-        compressed = brotli.compress(bytes(rgb_values))
+        uncompressed = bytes()
+        for x in range(38):
+            for y in range(49):
+                uncompressed += bytes([image[x, y, 1], image[x,y,0], image[x,y,2]])
+        compressed = brotli.compress(bytes(uncompressed))
         message = len(compressed).to_bytes(2, 'big') + compressed
         print(ser.read(1))
         ser.write(message)
