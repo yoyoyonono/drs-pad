@@ -21,7 +21,7 @@ async def main():
         except Exception:
             socket = await websockets.connect("ws://localhost:9002")
             continue
-        rgb_values = [x & 0xF0 for x in json.loads(message[:-1])["data"][0]]
+        rgb_values = [x & 0b1111_1000 for x in json.loads(message[:-1])["data"][0]]
         values = np.array(rgb_values, dtype=np.uint8).reshape(49, 38, 3)
         image = values.transpose(1, 0, 2)
         uncompressed = bytes()

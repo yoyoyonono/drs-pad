@@ -17,8 +17,7 @@ uint8_t led_buffer[NUM_LEDS * 3];
 
 size_t decompressed_size = sizeof(led_buffer);
 
-Adafruit_NeoPixel strip_1 = Adafruit_NeoPixel(NUM_LEDS/2, LED_STRIP_1_PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip_2 = Adafruit_NeoPixel(NUM_LEDS/2, LED_STRIP_2_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_1 = Adafruit_NeoPixel(LED_STRIP_LENGTH, LED_STRIP_1_PIN, NEO_GRB + NEO_KHZ800);
 
 volatile bool usb_buffer = false; // false = buffer 1, true = buffer 2
 
@@ -69,14 +68,10 @@ int main() {
             printf("e");
         }
         
-        for (uint16_t i = 0; i < NUM_LEDS/2; i++) {
+        for (uint16_t i = 0; i < LED_STRIP_LENGTH; i++) {
             strip_1.setPixelColor(i, strip_1.Color(led_buffer[i * 3], led_buffer[i * 3 + 1], led_buffer[i * 3 + 2]));
         }
-        for (uint16_t i = NUM_LEDS/2; i < NUM_LEDS; i++) {
-            strip_2.setPixelColor(i, strip_1.Color(led_buffer[i * 3], led_buffer[i * 3 + 1], led_buffer[i * 3 + 2]));
-        }
         strip_1.show();
-//        strip_2.show();
         
         gpio_put(PICO_DEFAULT_LED_PIN, usb_buffer);        
         usb_buffer = !usb_buffer;
