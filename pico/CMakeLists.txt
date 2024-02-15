@@ -17,12 +17,14 @@ add_executable(main
     main.cpp
 )
 
-add_subdirectory(pico_neopixels)
+pico_generate_pio_header(main ${CMAKE_CURRENT_LIST_DIR}/ws2812_parallel.pio)
 
 target_link_libraries(main
     pico_stdlib
     pico_multicore
-    pico_neopixel
+    hardware_irq
+    hardware_dma
+    hardware_pio
     brotli
 )
 
