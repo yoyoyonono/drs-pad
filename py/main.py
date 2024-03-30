@@ -5,7 +5,7 @@ import numpy as np
 import pygame
 import websockets
 import serial
-from time import perf_counter
+from time import perf_counter, sleep
 import threading
 import math
 
@@ -18,18 +18,20 @@ def clamp_led(x):
 
 async def socket_handler():
     global response_data
-    async with websockets.connect("ws://localhost:9002") as socket:
-        print("connected")
-        while True:
-            try:
+    async for socket in websockets.connect("ws://localhost:9002"):
+        try:
+            print("connected")
+            while True:
                 await socket.send(b'{"id":0,"module":"drs","function":"tapeled_get","params":[]}')
                 message = await socket.recv()
                 response_data = [clamp_led(x) & 0b1111_1110 for x in json.loads(message[:-1])["data"][0]]
-            except Exception:
-                continue
+        except Exception:
+            continue
 
 def serial_send():
-    with serial.Serial('COM10', 460800) as ser:
+    with serial.Serial('COM5', 460800) as ser:
+        sleep(1)
+        ser.write(b'g')
         while True:
             old_time = perf_counter()
             rgb_values = [reverse_bit(x) for x in response_data]

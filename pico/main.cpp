@@ -68,7 +68,8 @@ int main() {
 
     sleep_ms(1000);
 
-    stdio_uart_init_full(uart0, 460800, 0, 1);
+//    stdio_uart_init_full(uart0, 460800, 0, 1);
+    stdio_init_all();
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
@@ -111,6 +112,8 @@ int main() {
         led_buffer[i] = 0;
     }
     // start core 1
+
+    getchar();
 
     while (true) {
         // first two bytes are length and then read that many bytes from usb
