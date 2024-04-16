@@ -1,0 +1,12 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+brotli2 = "0.3.2"
+serde_json = "1.0.116"
+websocket = "0.27.1"
+websockets = "0.3.0"
